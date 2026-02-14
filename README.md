@@ -9,6 +9,7 @@
 **Personal autonomous Root of Trust** - deterministic identity and cryptographic document chain.
 Built on RFC 8785 (Canonical JSON), Ed25519, BIP-39, logical time, and fork detection.
 
+
 ## 📋 Table of Contents
 - [Features](#features)
 - [Installation](#installation)
@@ -20,6 +21,7 @@ Built on RFC 8785 (Canonical JSON), Ed25519, BIP-39, logical time, and fork dete
 - [Contributing](#contributing)
 - [License](#license)
 
+
 ## ✨ Features
 
 - **🔑 Deterministic Identity** - Identity derived solely from BIP-39 mnemonic
@@ -30,6 +32,7 @@ Built on RFC 8785 (Canonical JSON), Ed25519, BIP-39, logical time, and fork dete
 - **🔐 Multi-layer Trust** - Structural → Cryptographic → Policy validation
 - **🌐 Cross-platform** - Works in Node.js and browsers
 - **📦 Zero Dependencies** - Only cryptographic libraries
+
 
 ## 🚀 Installation
 
@@ -49,6 +52,7 @@ npm run build
 ### Requirements
 - Node.js 18.0.0 or higher
 - npm 7.0.0 or higher
+
 
 ## 🏃 Quick Start
 **1. Create a new identity**
@@ -111,6 +115,7 @@ if (forks.length > 0) {
 core.destroy();
 ```
 
+
 ## 📚 API Overview
 ### Core Classes
 | Class |  Description |
@@ -157,6 +162,7 @@ Import previously exported state.
 
 Securely zeroize sensitive data.
 
+
 ## 🛡️ Security
 ### Security Features
 - **Deterministic Identity**: Identity is a pure function of mnemonic only
@@ -171,6 +177,7 @@ Securely zeroize sensitive data.
 3. **Manual fork resolution**: Never automate fork resolution
 4. **Destroy instances**: Always call `destroy()` when done
 
+
 ## 📖 Documentation
 ### Generate documentation locally
 ```bash
@@ -183,6 +190,7 @@ npm run docs
 # Serve docs locally
 npx serve docs
 ```
+
 
 ## 🧪 Testing
 ```bash
@@ -199,6 +207,7 @@ node --test dist/test/mnemonic-debug.test.js
 - **Unit tests**: Test individual components
 - **Integration tests**: Test full workflows
 - **Security tests**: Verify security properties
+
 
 ## 🤝 Contributing
 We welcome contributions! Please see CONTRIBUTING.md
@@ -230,6 +239,7 @@ npm run lint
 5. Update documentation
 6. Submit pull request
 
+
 ## 📄 License
 Dual-licensed under either:
 - MIT License
@@ -237,11 +247,13 @@ Dual-licensed under either:
 
 at your option.
 
+
 ## 🙏 Acknowledgments
 - [@noble/ed25519](https://github.com/paulmillr/noble-ed25519) - Ed25519 implementation
 - [@noble/hashes](https://github.com/paulmillr/noble-hashes) - Cryptographic hashes
 - [@scure/bip39](https://github.com/paulmillr/scure-bip39) - BIP-39 implementation
 - [canonicalize](https://github.com/bergos/canonicalize) - RFC 8785 JSON canonicalization
+
 
 ## 📞 Support
 Issues: [GitHub Issues](https://github.com/NewZoneProject/nzcore/issues)
