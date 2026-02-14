@@ -1,0 +1,61 @@
+jebance@SIGMA:~/git/nzcore$ tree -a
+.
+├── dist
+├── docs
+│   ├── API_SPEC.md
+│   ├── ARCHITECTURE_NZCORE.md
+│   ├── CANONICAL_ENCODING.md
+│   ├── CONTRIBUTING.md
+│   ├── CRYPTO_AGILITY.md
+│   ├── CRYPTO_SPEC.md
+│   ├── DOCUMENT_SYSTEM.md
+│   ├── ENVIRONMENT.md
+│   ├── FORK_MODEL.md
+│   ├── IDENTITY_MODEL.md
+│   ├── SECURITY.md
+│   ├── THREAT_MODEL.md
+│   ├── TIME_MODEL.md
+│   └── TRUST_MODEL.md
+├── errors.txt
+├── examples
+├── .npmignore
+├── package.json
+├── package-lock.json
+├── README.md
+├── src
+│   ├── chain
+│   │   ├── fork.ts
+│   │   └── state.ts
+│   ├── constants.ts
+│   ├── core.ts
+│   ├── crypto
+│   │   ├── blake2b.ts
+│   │   ├── ed25519.ts
+│   │   ├── hkdf.ts
+│   │   └── scrypt.ts
+│   ├── document
+│   │   ├── builder.ts
+│   │   ├── canonical.ts
+│   │   └── validator.ts
+│   ├── errors.txt
+│   ├── identity
+│   │   ├── derivation.ts
+│   │   ├── factory.ts
+│   │   ├── logical-time.ts
+│   │   └── mnemonic.ts
+│   ├── index.ts
+│   ├── types.ts
+│   └── utils
+│       ├── encoding.ts
+│       └── zeroize.ts
+├── test
+│   └── integration.test.ts
+├── tree.txt
+├── tsconfig.cjs.json
+├── tsconfig.esm.json
+├── tsconfig.json
+└── tsconfig.types.json
+
+55 directories, 100 files
+jebance@SIGMA:~/git/nzcore$ 
+

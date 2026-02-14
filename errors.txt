@@ -1,0 +1,64 @@
+jebance@SIGMA:~/git/nzcore$ npm run build
+
+> nzcore@1.0.0 build
+> npm run build:esm && npm run build:cjs && npm run build:types
+
+
+> nzcore@1.0.0 build:esm
+> tsc --project tsconfig.esm.json
+
+src/core.ts:15:10 - error TS6133: 'fromHex' is declared but its value is never read.
+
+15 import { fromHex, toHex } from './utils/encoding.js';
+            ~~~~~~~
+
+src/crypto/ed25519.ts:14:4 - error TS2339: Property 'etc' does not exist on type 'typeof import("/home/jebance/git/nzcore/node_modules/@noble/ed25519/lib/index")'.
+
+14 ed.etc.sha512Sync = sha512;
+      ~~~
+
+src/crypto/ed25519.ts:37:16 - error TS2740: Type 'Promise<Uint8Array<ArrayBufferLike>>' is missing the following properties from type 'Uint8Array<ArrayBufferLike>': BYTES_PER_ELEMENT, buffer, byteLength, byteOffset, and 26 more.
+
+37       return { publicKey, privateKey };
+                  ~~~~~~~~~
+
+  src/crypto/ed25519.ts:21:5
+    21     publicKey: Uint8Array;
+           ~~~~~~~~~
+    The expected type comes from property 'publicKey' which is declared here on type '{ publicKey: Uint8Array<ArrayBufferLike>; privateKey: Uint8Array<ArrayBufferLike>; }'
+
+src/crypto/ed25519.ts:140:5 - error TS6133: 'privateKey' is declared but its value is never read.
+
+140     privateKey: Uint8Array,
+        ~~~~~~~~~~
+
+src/crypto/ed25519.ts:141:5 - error TS6133: 'publicKey' is declared but its value is never read.
+
+141     publicKey: Uint8Array
+        ~~~~~~~~~
+
+src/document/validator.ts:10:24 - error TS6133: 'ERROR_CODES' is declared but its value is never read.
+
+10 import { CRYPTO_SUITE, ERROR_CODES } from '../constants.js';
+                          ~~~~~~~~~~~
+
+src/identity/mnemonic.ts:79:22 - error TS2345: Argument of type 'Uint8Array<ArrayBufferLike>' is not assignable to parameter of type 'string'.
+
+79       return fromHex(entropyHex);
+                        ~~~~~~~~~~
+
+src/identity/mnemonic.ts:96:38 - error TS2345: Argument of type 'string' is not assignable to parameter of type 'Uint8Array<ArrayBufferLike>'.
+
+96       return bip39.entropyToMnemonic(entropyHex, wordlist);
+                                        ~~~~~~~~~~
+
+
+Found 8 errors in 4 files.
+
+Errors  Files
+     1  src/core.ts:15
+     4  src/crypto/ed25519.ts:14
+     1  src/document/validator.ts:10
+     2  src/identity/mnemonic.ts:79
+jebance@SIGMA:~/git/nzcore$ 
+

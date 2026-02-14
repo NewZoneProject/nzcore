@@ -1,0 +1,16 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts"],
+  "out": "docs",
+  "exclude": ["**/*.test.ts", "**/node_modules/**"],
+  "theme": "default",
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeExternals": true,
+  "includeVersion": true,
+  "categorizeByGroup": true,
+  "categoryOrder": ["Core", "Identity", "Document", "Chain", "Crypto", "Utils", "*"],
+  "navigationLinks": {
+    "GitHub": "https://github.com/NewZoneProject/nzcore"
+  }
+}
