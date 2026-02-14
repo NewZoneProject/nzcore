@@ -1,0 +1,1 @@
+{"version":3,"file":"minimal.test.js","sourceRoot":"","sources":["../../../test/minimal.test.ts"],"names":[],"mappings":"AAAA,OAAO,IAAI,MAAM,WAAW,CAAC;AAC7B,OAAO,MAAM,MAAM,aAAa,CAAC;AAEjC,IAAI,CAAC,cAAc,EAAE,CAAC,CAAC,EAAE,EAAE;IACzB,MAAM,CAAC,WAAW,CAAC,CAAC,EAAE,CAAC,CAAC,CAAC;IACzB,OAAO,CAAC,GAAG,CAAC,uBAAuB,CAAC,CAAC;AACvC,CAAC,CAAC,CAAC"}

@@ -88,3 +88,4 @@ export class Mnemonic {
         // Strings are immutable in JS, but we can help GC
     }
 }
+//# sourceMappingURL=mnemonic.js.map

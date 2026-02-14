@@ -1,13 +1,16 @@
+"use strict";
 /**
  * Document Validator
  * Trust layers: Structural → Cryptographic → Policy
  * Final trust = AND of all layers
  */
-import { CanonicalJSON } from './canonical.js';
-import { Ed25519 } from '../crypto/ed25519.js';
-import { CRYPTO_SUITE } from '../constants.js';
-import { fromHex } from '../utils/encoding.js';
-export class DocumentValidator {
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DocumentValidator = void 0;
+const canonical_js_1 = require("./canonical.js");
+const ed25519_js_1 = require("../crypto/ed25519.js");
+const constants_js_1 = require("../constants.js");
+const encoding_js_1 = require("../utils/encoding.js");
+class DocumentValidator {
     /**
      * Validate document
      * Implements three-layer trust model
@@ -69,8 +72,8 @@ export class DocumentValidator {
             errors.push(`logical_time MUST be >= 1, got ${doc.logical_time}`);
         }
         // Check crypto suite
-        if (doc.crypto_suite !== CRYPTO_SUITE) {
-            errors.push(`crypto_suite MUST be ${CRYPTO_SUITE}, got ${doc.crypto_suite}`);
+        if (doc.crypto_suite !== constants_js_1.CRYPTO_SUITE) {
+            errors.push(`crypto_suite MUST be ${constants_js_1.CRYPTO_SUITE}, got ${doc.crypto_suite}`);
         }
         // Check version
         if (doc.version !== '1.0') {
@@ -100,9 +103,9 @@ export class DocumentValidator {
             // MUST verify canonical JSON before signature
             const docWithoutSig = { ...doc };
             delete docWithoutSig.signature;
-            const canonical = await CanonicalJSON.serialize(docWithoutSig);
+            const canonical = await canonical_js_1.CanonicalJSON.serialize(docWithoutSig);
             try {
-                await CanonicalJSON.assertCanonical(canonical);
+                await canonical_js_1.CanonicalJSON.assertCanonical(canonical);
             }
             catch {
                 errors.push('Document is not canonical JSON');
@@ -115,7 +118,7 @@ export class DocumentValidator {
                 result.errors = [...(result.errors || []), ...errors];
                 return false;
             }
-            const signature = fromHex(doc.signature);
+            const signature = (0, encoding_js_1.fromHex)(doc.signature);
             const data = new TextEncoder().encode(canonical);
             // Get trusted keys from context
             const trustedKeys = context.trustedKeys || [];
@@ -128,7 +131,7 @@ export class DocumentValidator {
             let verified = false;
             for (const key of trustedKeys) {
                 try {
-                    const valid = await Ed25519.verify(signature, data, key);
+                    const valid = await ed25519_js_1.Ed25519.verify(signature, data, key);
                     if (valid) {
                         verified = true;
                         break;
@@ -225,3 +228,5 @@ export class DocumentValidator {
         return true;
     }
 }
+exports.DocumentValidator = DocumentValidator;
+//# sourceMappingURL=validator.js.map

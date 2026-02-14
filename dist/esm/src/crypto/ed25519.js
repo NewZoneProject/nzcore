@@ -74,3 +74,4 @@ export class Ed25519 {
         return key.length === 32;
     }
 }
+//# sourceMappingURL=ed25519.js.map
