@@ -93,6 +93,7 @@ export class DocumentValidator {
     /**
      * Cryptographic validation
      * Checks signature, canonical JSON, key validity
+     * Note: signature presence already checked in structural validation
      */
     async validateCryptographic(doc, context, result) {
         const errors = [];
@@ -109,12 +110,8 @@ export class DocumentValidator {
                 result.errors = [...(result.errors || []), ...errors];
                 return false;
             }
-            // Verify signature
-            if (!doc.signature) {
-                errors.push('No signature provided');
-                result.errors = [...(result.errors || []), ...errors];
-                return false;
-            }
+            // Verify signature (presence already validated structurally)
+            // Safe to use non-null assertion since structural validation passed
             const signature = fromHex(doc.signature);
             const data = new TextEncoder().encode(canonical);
             // Get trusted keys from context

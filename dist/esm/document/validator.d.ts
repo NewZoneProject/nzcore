@@ -18,6 +18,7 @@ export declare class DocumentValidator {
     /**
      * Cryptographic validation
      * Checks signature, canonical JSON, key validity
+     * Note: signature presence already checked in structural validation
      */
     private validateCryptographic;
     /**

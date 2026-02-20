@@ -118,6 +118,7 @@ export class DocumentValidator {
   /**
    * Cryptographic validation
    * Checks signature, canonical JSON, key validity
+   * Note: signature presence already checked in structural validation
    */
   private async validateCryptographic(
     doc: Document,
@@ -141,14 +142,9 @@ export class DocumentValidator {
         return false;
       }
 
-      // Verify signature
-      if (!doc.signature) {
-        errors.push('No signature provided');
-        result.errors = [...(result.errors || []), ...errors];
-        return false;
-      }
-
-      const signature = fromHex(doc.signature);
+      // Verify signature (presence already validated structurally)
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const signature = fromHex(doc.signature!); // Structural validation guarantees signature exists
       const data = new TextEncoder().encode(canonical);
       
       // Get trusted keys from context
