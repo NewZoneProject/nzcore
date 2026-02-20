@@ -164,9 +164,10 @@ test('Mnemonic - Fuzzing mask', async (t) => {
       try {
         const masked = Mnemonic.mask(str);
         assert.ok(typeof masked === 'string');
-        // First 3 words should be visible
-        if (str.split(' ').length >= 3) {
-          assert.ok(masked.includes('•'), 'Should contain mask characters');
+        // First 3 words should be visible if string has 3+ words
+        const wordCount = str.split(' ').length;
+        if (wordCount >= 3) {
+          assert.ok(masked.includes('•'), 'Should contain mask characters for multi-word strings');
         }
       } catch (e) {
         assert.fail(`mask() should not throw: ${e}`);
