@@ -59,7 +59,7 @@
     "build:esm": "tsc --project tsconfig.esm.json",
     "build:cjs": "tsc --project tsconfig.cjs.json",
     "build:types": "tsc --project tsconfig.types.json",
-    "build:tests": "npx tsc test/*.test.ts --outDir ./dist --module esnext --moduleResolution node --target es2020 --esModuleInterop --skipLibCheck",
+    "build:tests": "npx tsc test/*.test.ts test/fuzzing/*.test.ts --outDir ./dist --module esnext --moduleResolution node --target es2020 --esModuleInterop --skipLibCheck",
     "build:examples": "npx tsc examples/*.ts --outDir ./dist --module esnext --moduleResolution node --target es2020 --esModuleInterop --skipLibCheck",
     "clean": "rimraf dist",
     "lint": "eslint src/**/*.ts",

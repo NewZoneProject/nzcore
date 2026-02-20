@@ -13,7 +13,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _NewZoneCore_identity, _NewZoneCore_chainState, _NewZoneCore_clock, _NewZoneCore_validator, _NewZoneCore_mnemonic, _NewZoneCore_options;
+var _NewZoneCore_identity, _NewZoneCore_chainState, _NewZoneCore_clock, _NewZoneCore_validator, _NewZoneCore_rateLimiter, _NewZoneCore_mnemonic, _NewZoneCore_options;
 import { IdentityDerivation } from './identity/derivation.js';
 import { Mnemonic } from './identity/mnemonic.js';
 import { DocumentBuilder } from './document/builder.js';
@@ -25,6 +25,7 @@ import { Ed25519 } from './crypto/ed25519.js';
 import { zeroize } from './utils/zeroize.js';
 import { toHex } from './utils/encoding.js';
 import { CanonicalJSON } from './document/canonical.js';
+import { RateLimiter } from './utils/rate-limiter.js';
 import { NewZoneCoreError } from './types.js';
 import { ERROR_CODES } from './constants.js';
 export class NewZoneCore {
@@ -33,6 +34,7 @@ export class NewZoneCore {
         _NewZoneCore_chainState.set(this, null);
         _NewZoneCore_clock.set(this, null);
         _NewZoneCore_validator.set(this, null);
+        _NewZoneCore_rateLimiter.set(this, null);
         _NewZoneCore_mnemonic.set(this, void 0);
         _NewZoneCore_options.set(this, void 0);
         // Validate mnemonic
@@ -65,6 +67,14 @@ export class NewZoneCore {
             __classPrivateFieldSet(this, _NewZoneCore_chainState, new ChainStateManager(chainId, __classPrivateFieldGet(this, _NewZoneCore_clock, "f").current), "f");
             // Initialize validator
             __classPrivateFieldSet(this, _NewZoneCore_validator, new DocumentValidator(), "f");
+            // Initialize rate limiter if enabled
+            if (__classPrivateFieldGet(this, _NewZoneCore_options, "f").rateLimit?.enabled) {
+                const config = __classPrivateFieldGet(this, _NewZoneCore_options, "f").rateLimit;
+                __classPrivateFieldSet(this, _NewZoneCore_rateLimiter, new RateLimiter({
+                    limit: config.limit,
+                    windowMs: config.windowMs
+                }), "f");
+            }
         }
         catch (e) {
             this.destroy();
@@ -76,15 +86,9 @@ export class NewZoneCore {
      * Core API: deterministic, no wall-clock dependencies
      */
     async createDocument(type, payload = {}) {
-        console.log('=== createDocument start ===');
-        console.log('Type:', type);
-        console.log('Payload:', payload);
         this.assertInitialized();
-        console.log('Instance initialized OK');
         const logicalTime = __classPrivateFieldGet(this, _NewZoneCore_clock, "f").tick();
         const parentHash = __classPrivateFieldGet(this, _NewZoneCore_chainState, "f").getLastHash();
-        console.log('Logical time:', logicalTime);
-        console.log('Parent hash:', parentHash);
         const builder = new DocumentBuilder()
             .setType(type)
             .setChainId(__classPrivateFieldGet(this, _NewZoneCore_chainState, "f").chainId)
@@ -95,30 +99,17 @@ export class NewZoneCore {
         // Generate deterministic ID
         const id = IdentityDerivation.deriveDocumentId(__classPrivateFieldGet(this, _NewZoneCore_chainState, "f").chainId, parentHash, logicalTime);
         builder.setId(id);
-        console.log('Document ID:', id);
         // Build document (canonical)
-        console.log('Building document...');
         const doc = await builder.build();
-        console.log('Document built, fields:', Object.keys(doc));
         // Sign document
-        console.log('Preparing for signing...');
         const docWithoutSig = { ...doc };
         delete docWithoutSig.signature;
-        console.log('Serializing to canonical JSON...');
-        const canonical = await CanonicalJSON.serialize(docWithoutSig);
-        console.log('Canonical JSON:', canonical.substring(0, 100) + '...');
-        console.log('Signing with private key...');
-        console.log('Private key length:', __classPrivateFieldGet(this, _NewZoneCore_identity, "f").privateKey.length);
+        const canonical = CanonicalJSON.serialize(docWithoutSig);
         const signatureBytes = await Ed25519.sign(new TextEncoder().encode(canonical), __classPrivateFieldGet(this, _NewZoneCore_identity, "f").privateKey);
-        console.log('Signature bytes length:', signatureBytes.length);
-        console.log('Signature bytes (first 10):', Array.from(signatureBytes.slice(0, 10)).map(b => b.toString(16)).join(''));
-        if (!signatureBytes || signatureBytes.length === 0) {
+        if (!signatureBytes || signatureBytes.length !== 64) {
             throw new NewZoneCoreError(ERROR_CODES.INVALID_SIGNATURE, 'Failed to generate signature - empty result');
         }
         doc.signature = toHex(signatureBytes);
-        console.log('Signature hex length:', doc.signature.length);
-        console.log('Signature hex (first 20):', doc.signature.substring(0, 20));
-        console.log('=== createDocument end ===');
         // Commit to chain
         __classPrivateFieldGet(this, _NewZoneCore_chainState, "f").append(doc);
         return doc;
@@ -129,6 +120,8 @@ export class NewZoneCore {
      */
     async verifyDocument(document) {
         this.assertInitialized();
+        // Check rate limit if enabled
+        __classPrivateFieldGet(this, _NewZoneCore_rateLimiter, "f")?.check();
         return __classPrivateFieldGet(this, _NewZoneCore_validator, "f").validate(document, {
             currentTime: __classPrivateFieldGet(this, _NewZoneCore_clock, "f").current,
             trustedKeys: [__classPrivateFieldGet(this, _NewZoneCore_identity, "f").publicKey]
@@ -141,6 +134,28 @@ export class NewZoneCore {
     getChainState() {
         this.assertInitialized();
         return __classPrivateFieldGet(this, _NewZoneCore_chainState, "f").getState();
+    }
+    /**
+     * Get rate limiter state (if enabled)
+     */
+    getRateLimitState() {
+        if (!__classPrivateFieldGet(this, _NewZoneCore_rateLimiter, "f")) {
+            return null;
+        }
+        const state = __classPrivateFieldGet(this, _NewZoneCore_rateLimiter, "f").getState();
+        return {
+            enabled: true,
+            limit: state.limit,
+            windowMs: state.windowMs,
+            remaining: state.remaining,
+            resetAt: state.resetAt
+        };
+    }
+    /**
+     * Reset rate limiter
+     */
+    resetRateLimit() {
+        __classPrivateFieldGet(this, _NewZoneCore_rateLimiter, "f")?.reset();
     }
     /**
      * Detect forks
@@ -229,4 +244,4 @@ export class NewZoneCore {
         __classPrivateFieldSet(this, _NewZoneCore_mnemonic, undefined, "f");
     }
 }
-_NewZoneCore_identity = new WeakMap(), _NewZoneCore_chainState = new WeakMap(), _NewZoneCore_clock = new WeakMap(), _NewZoneCore_validator = new WeakMap(), _NewZoneCore_mnemonic = new WeakMap(), _NewZoneCore_options = new WeakMap();
+_NewZoneCore_identity = new WeakMap(), _NewZoneCore_chainState = new WeakMap(), _NewZoneCore_clock = new WeakMap(), _NewZoneCore_validator = new WeakMap(), _NewZoneCore_rateLimiter = new WeakMap(), _NewZoneCore_mnemonic = new WeakMap(), _NewZoneCore_options = new WeakMap();

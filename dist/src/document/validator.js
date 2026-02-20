@@ -93,6 +93,7 @@ export class DocumentValidator {
     /**
      * Cryptographic validation
      * Checks signature, canonical JSON, key validity
+     * Note: signature presence already checked in structural validation
      */
     async validateCryptographic(doc, context, result) {
         const errors = [];
@@ -100,22 +101,18 @@ export class DocumentValidator {
             // MUST verify canonical JSON before signature
             const docWithoutSig = { ...doc };
             delete docWithoutSig.signature;
-            const canonical = await CanonicalJSON.serialize(docWithoutSig);
+            const canonical = CanonicalJSON.serialize(docWithoutSig);
             try {
-                await CanonicalJSON.assertCanonical(canonical);
+                CanonicalJSON.assertCanonical(canonical);
             }
             catch {
                 errors.push('Document is not canonical JSON');
                 result.errors = [...(result.errors || []), ...errors];
                 return false;
             }
-            // Verify signature
-            if (!doc.signature) {
-                errors.push('No signature provided');
-                result.errors = [...(result.errors || []), ...errors];
-                return false;
-            }
-            const signature = fromHex(doc.signature);
+            // Verify signature (presence already validated structurally)
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const signature = fromHex(doc.signature); // Structural validation guarantees signature exists
             const data = new TextEncoder().encode(canonical);
             // Get trusted keys from context
             const trustedKeys = context.trustedKeys || [];
