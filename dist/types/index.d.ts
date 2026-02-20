@@ -21,6 +21,7 @@ export { Scrypt } from './crypto/scrypt.js';
 export { Hkdf } from './crypto/hkdf.js';
 export { zeroize, constantTimeEqual } from './utils/zeroize.js';
 export { toHex, fromHex, toBase64URL, fromBase64URL } from './utils/encoding.js';
+export { RateLimiter, RateLimitPresets } from './utils/rate-limiter.js';
 export * from './types.js';
 export * from './constants.js';
 export declare const VERSION = "1.0.0";

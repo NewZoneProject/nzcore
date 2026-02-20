@@ -14,6 +14,7 @@ import { Ed25519 } from './crypto/ed25519.js';
 import { zeroize } from './utils/zeroize.js';
 import { toHex } from './utils/encoding.js';
 import { CanonicalJSON } from './document/canonical.js';
+import { RateLimiter } from './utils/rate-limiter.js';
 
 import {
   Document,
@@ -33,10 +34,11 @@ export class NewZoneCore implements NewZoneCoreInstance {
     privateKey: Uint8Array;
     chainId: string;
   } | null = null;
-  
+
   #chainState: ChainStateManager | null = null;
   #clock: LogicalClock | null = null;
   #validator: DocumentValidator | null = null;
+  #rateLimiter: RateLimiter | null = null;
   #mnemonic?: string;
   #options: NewZoneCoreOptions;
 
@@ -70,16 +72,25 @@ export class NewZoneCore implements NewZoneCoreInstance {
       // Derive identity (deterministic from mnemonic ONLY)
       const derivation = await IdentityDerivation.fromMnemonic(this.#mnemonic!);
       this.#identity = derivation.rootKey;
-      
+
       // Initialize logical time
       this.#clock = new LogicalClock(this.#options.initialTime || 1);
-      
+
       // Initialize chain state
       const chainId = this.#options.chainId || this.#identity.chainId;
       this.#chainState = new ChainStateManager(chainId, this.#clock.current);
-      
+
       // Initialize validator
       this.#validator = new DocumentValidator();
+
+      // Initialize rate limiter if enabled
+      if (this.#options.rateLimit?.enabled) {
+        const config = this.#options.rateLimit;
+        this.#rateLimiter = new RateLimiter({
+          limit: config.limit,
+          windowMs: config.windowMs
+        });
+      }
     } catch (e) {
       this.destroy();
       throw e;
@@ -148,6 +159,9 @@ export class NewZoneCore implements NewZoneCoreInstance {
   async verifyDocument(document: Document): Promise<ValidationResult> {
     this.assertInitialized();
 
+    // Check rate limit if enabled
+    this.#rateLimiter?.check();
+
     return this.#validator!.validate(document, {
       currentTime: this.#clock!.current,
       trustedKeys: [this.#identity!.publicKey]
@@ -161,6 +175,37 @@ export class NewZoneCore implements NewZoneCoreInstance {
   getChainState(): ChainState {
     this.assertInitialized();
     return this.#chainState!.getState();
+  }
+
+  /**
+   * Get rate limiter state (if enabled)
+   */
+  getRateLimitState(): {
+    enabled: boolean;
+    limit?: number;
+    windowMs?: number;
+    remaining?: number;
+    resetAt?: number;
+  } | null {
+    if (!this.#rateLimiter) {
+      return null;
+    }
+
+    const state = this.#rateLimiter.getState();
+    return {
+      enabled: true,
+      limit: state.limit,
+      windowMs: state.windowMs,
+      remaining: state.remaining,
+      resetAt: state.resetAt
+    };
+  }
+
+  /**
+   * Reset rate limiter
+   */
+  resetRateLimit(): void {
+    this.#rateLimiter?.reset();
   }
 
   /**

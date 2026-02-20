@@ -120,10 +120,17 @@ export class NewZoneCoreError extends Error {
 
 // ============ API Types ============
 
+export interface RateLimitConfig {
+  enabled: boolean;
+  limit: number;
+  windowMs: number;
+}
+
 export interface NewZoneCoreOptions {
   chainId?: string;
   initialTime?: number;
   policyEngine?: PolicyEngine;
+  rateLimit?: RateLimitConfig;
 }
 
 export interface NewZoneCoreInstance {

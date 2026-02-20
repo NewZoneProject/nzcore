@@ -14,7 +14,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _NewZoneCore_identity, _NewZoneCore_chainState, _NewZoneCore_clock, _NewZoneCore_validator, _NewZoneCore_mnemonic, _NewZoneCore_options;
+var _NewZoneCore_identity, _NewZoneCore_chainState, _NewZoneCore_clock, _NewZoneCore_validator, _NewZoneCore_rateLimiter, _NewZoneCore_mnemonic, _NewZoneCore_options;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NewZoneCore = void 0;
 const derivation_js_1 = require("./identity/derivation.js");
@@ -28,6 +28,7 @@ const ed25519_js_1 = require("./crypto/ed25519.js");
 const zeroize_js_1 = require("./utils/zeroize.js");
 const encoding_js_1 = require("./utils/encoding.js");
 const canonical_js_1 = require("./document/canonical.js");
+const rate_limiter_js_1 = require("./utils/rate-limiter.js");
 const types_js_1 = require("./types.js");
 const constants_js_1 = require("./constants.js");
 class NewZoneCore {
@@ -36,6 +37,7 @@ class NewZoneCore {
         _NewZoneCore_chainState.set(this, null);
         _NewZoneCore_clock.set(this, null);
         _NewZoneCore_validator.set(this, null);
+        _NewZoneCore_rateLimiter.set(this, null);
         _NewZoneCore_mnemonic.set(this, void 0);
         _NewZoneCore_options.set(this, void 0);
         // Validate mnemonic
@@ -68,6 +70,14 @@ class NewZoneCore {
             __classPrivateFieldSet(this, _NewZoneCore_chainState, new state_js_1.ChainStateManager(chainId, __classPrivateFieldGet(this, _NewZoneCore_clock, "f").current), "f");
             // Initialize validator
             __classPrivateFieldSet(this, _NewZoneCore_validator, new validator_js_1.DocumentValidator(), "f");
+            // Initialize rate limiter if enabled
+            if (__classPrivateFieldGet(this, _NewZoneCore_options, "f").rateLimit?.enabled) {
+                const config = __classPrivateFieldGet(this, _NewZoneCore_options, "f").rateLimit;
+                __classPrivateFieldSet(this, _NewZoneCore_rateLimiter, new rate_limiter_js_1.RateLimiter({
+                    limit: config.limit,
+                    windowMs: config.windowMs
+                }), "f");
+            }
         }
         catch (e) {
             this.destroy();
@@ -113,6 +123,8 @@ class NewZoneCore {
      */
     async verifyDocument(document) {
         this.assertInitialized();
+        // Check rate limit if enabled
+        __classPrivateFieldGet(this, _NewZoneCore_rateLimiter, "f")?.check();
         return __classPrivateFieldGet(this, _NewZoneCore_validator, "f").validate(document, {
             currentTime: __classPrivateFieldGet(this, _NewZoneCore_clock, "f").current,
             trustedKeys: [__classPrivateFieldGet(this, _NewZoneCore_identity, "f").publicKey]
@@ -125,6 +137,28 @@ class NewZoneCore {
     getChainState() {
         this.assertInitialized();
         return __classPrivateFieldGet(this, _NewZoneCore_chainState, "f").getState();
+    }
+    /**
+     * Get rate limiter state (if enabled)
+     */
+    getRateLimitState() {
+        if (!__classPrivateFieldGet(this, _NewZoneCore_rateLimiter, "f")) {
+            return null;
+        }
+        const state = __classPrivateFieldGet(this, _NewZoneCore_rateLimiter, "f").getState();
+        return {
+            enabled: true,
+            limit: state.limit,
+            windowMs: state.windowMs,
+            remaining: state.remaining,
+            resetAt: state.resetAt
+        };
+    }
+    /**
+     * Reset rate limiter
+     */
+    resetRateLimit() {
+        __classPrivateFieldGet(this, _NewZoneCore_rateLimiter, "f")?.reset();
     }
     /**
      * Detect forks
@@ -214,5 +248,5 @@ class NewZoneCore {
     }
 }
 exports.NewZoneCore = NewZoneCore;
-_NewZoneCore_identity = new WeakMap(), _NewZoneCore_chainState = new WeakMap(), _NewZoneCore_clock = new WeakMap(), _NewZoneCore_validator = new WeakMap(), _NewZoneCore_mnemonic = new WeakMap(), _NewZoneCore_options = new WeakMap();
+_NewZoneCore_identity = new WeakMap(), _NewZoneCore_chainState = new WeakMap(), _NewZoneCore_clock = new WeakMap(), _NewZoneCore_validator = new WeakMap(), _NewZoneCore_rateLimiter = new WeakMap(), _NewZoneCore_mnemonic = new WeakMap(), _NewZoneCore_options = new WeakMap();
 //# sourceMappingURL=core.js.map

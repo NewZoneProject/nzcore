@@ -30,6 +30,20 @@ export declare class NewZoneCore implements NewZoneCoreInstance {
      */
     getChainState(): ChainState;
     /**
+     * Get rate limiter state (if enabled)
+     */
+    getRateLimitState(): {
+        enabled: boolean;
+        limit?: number;
+        windowMs?: number;
+        remaining?: number;
+        resetAt?: number;
+    } | null;
+    /**
+     * Reset rate limiter
+     */
+    resetRateLimit(): void;
+    /**
      * Detect forks
      * Core API: MUST NOT attempt automatic resolution
      */

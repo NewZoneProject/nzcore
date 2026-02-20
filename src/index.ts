@@ -33,6 +33,7 @@ export { Hkdf } from './crypto/hkdf.js';
 // Utils
 export { zeroize, constantTimeEqual } from './utils/zeroize.js';
 export { toHex, fromHex, toBase64URL, fromBase64URL } from './utils/encoding.js';
+export { RateLimiter, RateLimitPresets } from './utils/rate-limiter.js';
 
 // Types
 export * from './types.js';

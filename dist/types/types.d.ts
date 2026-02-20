@@ -82,10 +82,16 @@ export declare class NewZoneCoreError extends Error {
     readonly context?: Record<string, unknown>;
     constructor(code: string, message: string, context?: Record<string, unknown>);
 }
+export interface RateLimitConfig {
+    enabled: boolean;
+    limit: number;
+    windowMs: number;
+}
 export interface NewZoneCoreOptions {
     chainId?: string;
     initialTime?: number;
     policyEngine?: PolicyEngine;
+    rateLimit?: RateLimitConfig;
 }
 export interface NewZoneCoreInstance {
     createDocument(type: string, payload?: DocumentPayload): Promise<Document>;

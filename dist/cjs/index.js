@@ -21,7 +21,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.VERSION = exports.fromBase64URL = exports.toBase64URL = exports.fromHex = exports.toHex = exports.constantTimeEqual = exports.zeroize = exports.Hkdf = exports.Scrypt = exports.Blake2b = exports.Ed25519 = exports.ForkDetector = exports.ChainStateManager = exports.LogicalClock = exports.CanonicalJSON = exports.DocumentValidator = exports.DocumentBuilder = exports.createIdentity = exports.generateIdentity = exports.IdentityDerivation = exports.Mnemonic = exports.NewZoneCore = void 0;
+exports.VERSION = exports.RateLimitPresets = exports.RateLimiter = exports.fromBase64URL = exports.toBase64URL = exports.fromHex = exports.toHex = exports.constantTimeEqual = exports.zeroize = exports.Hkdf = exports.Scrypt = exports.Blake2b = exports.Ed25519 = exports.ForkDetector = exports.ChainStateManager = exports.LogicalClock = exports.CanonicalJSON = exports.DocumentValidator = exports.DocumentBuilder = exports.createIdentity = exports.generateIdentity = exports.IdentityDerivation = exports.Mnemonic = exports.NewZoneCore = void 0;
 // Core class
 var core_js_1 = require("./core.js");
 Object.defineProperty(exports, "NewZoneCore", { enumerable: true, get: function () { return core_js_1.NewZoneCore; } });
@@ -65,6 +65,9 @@ Object.defineProperty(exports, "toHex", { enumerable: true, get: function () { r
 Object.defineProperty(exports, "fromHex", { enumerable: true, get: function () { return encoding_js_1.fromHex; } });
 Object.defineProperty(exports, "toBase64URL", { enumerable: true, get: function () { return encoding_js_1.toBase64URL; } });
 Object.defineProperty(exports, "fromBase64URL", { enumerable: true, get: function () { return encoding_js_1.fromBase64URL; } });
+var rate_limiter_js_1 = require("./utils/rate-limiter.js");
+Object.defineProperty(exports, "RateLimiter", { enumerable: true, get: function () { return rate_limiter_js_1.RateLimiter; } });
+Object.defineProperty(exports, "RateLimitPresets", { enumerable: true, get: function () { return rate_limiter_js_1.RateLimitPresets; } });
 // Types
 __exportStar(require("./types.js"), exports);
 // Constants
