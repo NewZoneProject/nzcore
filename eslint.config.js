@@ -22,17 +22,20 @@ export default [
     },
     rules: {
       // TypeScript-specific rules
-      "@typescript-eslint/no-unused-vars": ["error", { 
+      "@typescript-eslint/no-unused-vars": ["error", {
         "argsIgnorePattern": "^_",
-        "varsIgnorePattern": "^_" 
+        "varsIgnorePattern": "^_"
       }],
-      "@typescript-eslint/no-explicit-any": "off", // Разрешаем any
-      "@typescript-eslint/no-non-null-assertion": "off", // Разрешаем ! оператор
-      "@typescript-eslint/ban-ts-comment": "off", // Разрешаем @ts-ignore
-      
+      "@typescript-eslint/no-explicit-any": "warn", // Warn about any usage
+      "@typescript-eslint/no-non-null-assertion": "warn", // Warn about ! operator
+      "@typescript-eslint/ban-ts-comment": ["error", {
+        "ts-ignore": "allow-with-description",
+        "ts-expect-error": "allow-with-description"
+      }],
+
       // General rules
-      "no-constant-condition": "off", // Разрешаем while(true)
-      "no-unused-vars": "off", // Отключаем в пользу TypeScript версии
+      "no-constant-condition": "off", // Allow while(true)
+      "no-unused-vars": "off", // Use TypeScript version
     },
     ignores: ["dist/**", "node_modules/**", "coverage/**"],
   },

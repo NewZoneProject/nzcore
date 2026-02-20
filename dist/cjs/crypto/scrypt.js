@@ -47,7 +47,12 @@ class Scrypt {
             // Constant-time comparison
             let result = 0;
             for (let i = 0; i < expectedKey.length; i++) {
-                result |= derived[i] ^ expectedKey[i];
+                const derivedByte = derived[i];
+                const expectedByte = expectedKey[i];
+                if (derivedByte === undefined || expectedByte === undefined) {
+                    return false;
+                }
+                result |= derivedByte ^ expectedByte;
             }
             // Zeroize derived key
             (0, zeroize_js_1.zeroize)(derived);

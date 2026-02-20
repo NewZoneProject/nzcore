@@ -62,16 +62,21 @@ export class Scrypt {
   ): boolean {
     try {
       const derived = this.derive(password, salt, expectedKey.length);
-      
+
       // Constant-time comparison
       let result = 0;
       for (let i = 0; i < expectedKey.length; i++) {
-        result |= derived[i]! ^ expectedKey[i]!;
+        const derivedByte = derived[i];
+        const expectedByte = expectedKey[i];
+        if (derivedByte === undefined || expectedByte === undefined) {
+          return false;
+        }
+        result |= derivedByte ^ expectedByte;
       }
-      
+
       // Zeroize derived key
       zeroize(derived);
-      
+
       return result === 0;
     } catch {
       return false;
