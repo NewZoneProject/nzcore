@@ -14,7 +14,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _ChainStateManager_instances, _ChainStateManager_documents, _ChainStateManager_lastHash, _ChainStateManager_clock, _ChainStateManager_detectedForks, _ChainStateManager_detectFork;
+var _ChainStateManager_instances, _ChainStateManager_documents, _ChainStateManager_lastHash, _ChainStateManager_clock, _ChainStateManager_detectedForks, _ChainStateManager_forkCacheValid, _ChainStateManager_detectFork, _ChainStateManager_rebuildForkCache;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChainStateManager = void 0;
 const blake2b_js_1 = require("../crypto/blake2b.js");
@@ -28,6 +28,7 @@ class ChainStateManager {
         _ChainStateManager_lastHash.set(this, '0'.repeat(64));
         _ChainStateManager_clock.set(this, void 0);
         _ChainStateManager_detectedForks.set(this, new Map());
+        _ChainStateManager_forkCacheValid.set(this, false);
         this.chainId = chainId;
         __classPrivateFieldSet(this, _ChainStateManager_clock, new logical_time_js_1.LogicalClock(initialTime), "f");
     }
@@ -39,15 +40,16 @@ class ChainStateManager {
         if (document.chain_id !== this.chainId) {
             throw new types_js_1.NewZoneCoreError(constants_js_1.ERROR_CODES.VALIDATION_FAILED, 'Document chain ID mismatch', { expected: this.chainId, got: document.chain_id });
         }
-        // Verify parent hash
+        // Verify parent hash and detect forks
         if (document.parent_hash !== __classPrivateFieldGet(this, _ChainStateManager_lastHash, "f")) {
-            // Check if this creates a fork
             __classPrivateFieldGet(this, _ChainStateManager_instances, "m", _ChainStateManager_detectFork).call(this, document);
         }
         // Store document
         __classPrivateFieldGet(this, _ChainStateManager_documents, "f").set(document.id, document);
         // Update last hash
         __classPrivateFieldSet(this, _ChainStateManager_lastHash, document.id, "f");
+        // Invalidate fork cache - documents changed
+        __classPrivateFieldSet(this, _ChainStateManager_forkCacheValid, false, "f");
         // Advance logical time
         __classPrivateFieldGet(this, _ChainStateManager_clock, "f").tick();
     }
@@ -82,9 +84,16 @@ class ChainStateManager {
         return Array.from(__classPrivateFieldGet(this, _ChainStateManager_documents, "f").values());
     }
     /**
-     * Get detected forks
+     * Get detected forks (cached)
+     * Returns cached result unless documents changed
      */
     get forks() {
+        if (!__classPrivateFieldGet(this, _ChainStateManager_forkCacheValid, "f")) {
+            // Rebuild cache from current documents
+            __classPrivateFieldGet(this, _ChainStateManager_detectedForks, "f").clear();
+            __classPrivateFieldGet(this, _ChainStateManager_instances, "m", _ChainStateManager_rebuildForkCache).call(this);
+            __classPrivateFieldSet(this, _ChainStateManager_forkCacheValid, true, "f");
+        }
         return Array.from(__classPrivateFieldGet(this, _ChainStateManager_detectedForks, "f").values());
     }
     /**
@@ -128,6 +137,7 @@ class ChainStateManager {
         __classPrivateFieldGet(this, _ChainStateManager_documents, "f").clear();
         __classPrivateFieldSet(this, _ChainStateManager_lastHash, '0'.repeat(64), "f");
         __classPrivateFieldGet(this, _ChainStateManager_detectedForks, "f").clear();
+        __classPrivateFieldSet(this, _ChainStateManager_forkCacheValid, false, "f");
     }
     /**
      * Export state for persistence
@@ -162,7 +172,7 @@ class ChainStateManager {
     }
 }
 exports.ChainStateManager = ChainStateManager;
-_ChainStateManager_documents = new WeakMap(), _ChainStateManager_lastHash = new WeakMap(), _ChainStateManager_clock = new WeakMap(), _ChainStateManager_detectedForks = new WeakMap(), _ChainStateManager_instances = new WeakSet(), _ChainStateManager_detectFork = function _ChainStateManager_detectFork(document) {
+_ChainStateManager_documents = new WeakMap(), _ChainStateManager_lastHash = new WeakMap(), _ChainStateManager_clock = new WeakMap(), _ChainStateManager_detectedForks = new WeakMap(), _ChainStateManager_forkCacheValid = new WeakMap(), _ChainStateManager_instances = new WeakSet(), _ChainStateManager_detectFork = function _ChainStateManager_detectFork(document) {
     // Find other documents with same parent
     const siblings = Array.from(__classPrivateFieldGet(this, _ChainStateManager_documents, "f").values())
         .filter(d => d.parent_hash === document.parent_hash);
@@ -174,6 +184,25 @@ _ChainStateManager_documents = new WeakMap(), _ChainStateManager_lastHash = new 
             resolved: false
         };
         __classPrivateFieldGet(this, _ChainStateManager_detectedForks, "f").set(document.parent_hash, forkInfo);
+    }
+}, _ChainStateManager_rebuildForkCache = function _ChainStateManager_rebuildForkCache() {
+    const parentMap = new Map();
+    // Group documents by parent_hash
+    for (const doc of __classPrivateFieldGet(this, _ChainStateManager_documents, "f").values()) {
+        const parentHash = doc.parent_hash;
+        const existing = parentMap.get(parentHash) || [];
+        parentMap.set(parentHash, [...existing, doc]);
+    }
+    // Detect forks (multiple children of same parent)
+    for (const [parentHash, children] of parentMap.entries()) {
+        if (children.length > 1) {
+            __classPrivateFieldGet(this, _ChainStateManager_detectedForks, "f").set(parentHash, {
+                parentHash,
+                documents: children.map(d => d.id),
+                detectedAt: Math.max(...children.map(d => d.logical_time)),
+                resolved: false
+            });
+        }
     }
 };
 //# sourceMappingURL=state.js.map

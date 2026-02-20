@@ -14,6 +14,7 @@ export class ChainStateManager {
   #lastHash: string = '0'.repeat(64);
   #clock: LogicalClock;
   #detectedForks: Map<string, ForkInfo> = new Map();
+  #forkCacheValid = false;
 
   constructor(chainId: string, initialTime: number = 1) {
     this.chainId = chainId;
@@ -33,18 +34,20 @@ export class ChainStateManager {
       );
     }
 
-    // Verify parent hash
+    // Verify parent hash and detect forks
     if (document.parent_hash !== this.#lastHash) {
-      // Check if this creates a fork
       this.#detectFork(document);
     }
 
     // Store document
     this.#documents.set(document.id, document);
-    
+
     // Update last hash
     this.#lastHash = document.id;
-    
+
+    // Invalidate fork cache - documents changed
+    this.#forkCacheValid = false;
+
     // Advance logical time
     this.#clock.tick();
   }
@@ -105,10 +108,43 @@ export class ChainStateManager {
   }
 
   /**
-   * Get detected forks
+   * Get detected forks (cached)
+   * Returns cached result unless documents changed
    */
   get forks(): ForkInfo[] {
+    if (!this.#forkCacheValid) {
+      // Rebuild cache from current documents
+      this.#detectedForks.clear();
+      this.#rebuildForkCache();
+      this.#forkCacheValid = true;
+    }
     return Array.from(this.#detectedForks.values());
+  }
+
+  /**
+   * Rebuild fork cache from scratch
+   */
+  #rebuildForkCache(): void {
+    const parentMap = new Map<string, Document[]>();
+
+    // Group documents by parent_hash
+    for (const doc of this.#documents.values()) {
+      const parentHash = doc.parent_hash;
+      const existing = parentMap.get(parentHash) || [];
+      parentMap.set(parentHash, [...existing, doc]);
+    }
+
+    // Detect forks (multiple children of same parent)
+    for (const [parentHash, children] of parentMap.entries()) {
+      if (children.length > 1) {
+        this.#detectedForks.set(parentHash, {
+          parentHash,
+          documents: children.map(d => d.id),
+          detectedAt: Math.max(...children.map(d => d.logical_time)),
+          resolved: false
+        });
+      }
+    }
   }
 
   /**
@@ -164,6 +200,7 @@ export class ChainStateManager {
     this.#documents.clear();
     this.#lastHash = '0'.repeat(64);
     this.#detectedForks.clear();
+    this.#forkCacheValid = false;
   }
 
   /**

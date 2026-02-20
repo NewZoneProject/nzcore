@@ -114,8 +114,8 @@ class DocumentValidator {
                 return false;
             }
             // Verify signature (presence already validated structurally)
-            // Safe to use non-null assertion since structural validation passed
-            const signature = (0, encoding_js_1.fromHex)(doc.signature);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const signature = (0, encoding_js_1.fromHex)(doc.signature); // Structural validation guarantees signature exists
             const data = new TextEncoder().encode(canonical);
             // Get trusted keys from context
             const trustedKeys = context.trustedKeys || [];

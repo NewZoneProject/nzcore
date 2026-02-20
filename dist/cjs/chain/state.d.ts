@@ -33,7 +33,8 @@ export declare class ChainStateManager {
      */
     get documents(): Document[];
     /**
-     * Get detected forks
+     * Get detected forks (cached)
+     * Returns cached result unless documents changed
      */
     get forks(): ForkInfo[];
     /**
