@@ -76,9 +76,60 @@ export class ChainStateManager {
     }
     /**
      * Get all documents
+     * Note: For large chains, use getDocumentsPaginated() instead
      */
     get documents() {
         return Array.from(__classPrivateFieldGet(this, _ChainStateManager_documents, "f").values());
+    }
+    /**
+     * Get documents with pagination
+     * More efficient for large chains
+     */
+    getDocumentsPaginated(options) {
+        const limit = options?.limit ?? 100;
+        const offset = options?.offset ?? 0;
+        const sortBy = options?.sortBy ?? 'logical_time';
+        const sortOrder = options?.sortOrder ?? 'asc';
+        const allDocuments = Array.from(__classPrivateFieldGet(this, _ChainStateManager_documents, "f").values());
+        // Sort documents
+        allDocuments.sort((a, b) => {
+            const aVal = a[sortBy];
+            const bVal = b[sortBy];
+            if (typeof aVal === 'number' && typeof bVal === 'number') {
+                return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+            }
+            const aStr = String(aVal);
+            const bStr = String(bVal);
+            return sortOrder === 'asc'
+                ? aStr.localeCompare(bStr)
+                : bStr.localeCompare(aStr);
+        });
+        const total = allDocuments.length;
+        const documents = allDocuments.slice(offset, offset + limit);
+        const hasMore = offset + limit < total;
+        return {
+            documents,
+            total,
+            hasMore
+        };
+    }
+    /**
+     * Get documents by type with pagination
+     */
+    getDocumentsByType(type, options) {
+        const limit = options?.limit ?? 100;
+        const offset = options?.offset ?? 0;
+        const allDocuments = Array.from(__classPrivateFieldGet(this, _ChainStateManager_documents, "f").values())
+            .filter(doc => doc.type === type)
+            .sort((a, b) => a.logical_time - b.logical_time);
+        const total = allDocuments.length;
+        const documents = allDocuments.slice(offset, offset + limit);
+        const hasMore = offset + limit < total;
+        return {
+            documents,
+            total,
+            hasMore
+        };
     }
     /**
      * Get detected forks (cached)

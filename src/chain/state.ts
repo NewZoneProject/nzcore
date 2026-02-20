@@ -102,9 +102,87 @@ export class ChainStateManager {
 
   /**
    * Get all documents
+   * Note: For large chains, use getDocumentsPaginated() instead
    */
   get documents(): Document[] {
     return Array.from(this.#documents.values());
+  }
+
+  /**
+   * Get documents with pagination
+   * More efficient for large chains
+   */
+  getDocumentsPaginated(options?: {
+    limit?: number;
+    offset?: number;
+    sortBy?: 'logical_time' | 'id';
+    sortOrder?: 'asc' | 'desc';
+  }): {
+    documents: Document[];
+    total: number;
+    hasMore: boolean;
+  } {
+    const limit = options?.limit ?? 100;
+    const offset = options?.offset ?? 0;
+    const sortBy = options?.sortBy ?? 'logical_time';
+    const sortOrder = options?.sortOrder ?? 'asc';
+
+    const allDocuments = Array.from(this.#documents.values());
+
+    // Sort documents
+    allDocuments.sort((a, b) => {
+      const aVal = a[sortBy];
+      const bVal = b[sortBy];
+      
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+      
+      const aStr = String(aVal);
+      const bStr = String(bVal);
+      return sortOrder === 'asc' 
+        ? aStr.localeCompare(bStr) 
+        : bStr.localeCompare(aStr);
+    });
+
+    const total = allDocuments.length;
+    const documents = allDocuments.slice(offset, offset + limit);
+    const hasMore = offset + limit < total;
+
+    return {
+      documents,
+      total,
+      hasMore
+    };
+  }
+
+  /**
+   * Get documents by type with pagination
+   */
+  getDocumentsByType(
+    type: string,
+    options?: { limit?: number; offset?: number }
+  ): {
+    documents: Document[];
+    total: number;
+    hasMore: boolean;
+  } {
+    const limit = options?.limit ?? 100;
+    const offset = options?.offset ?? 0;
+
+    const allDocuments = Array.from(this.#documents.values())
+      .filter(doc => doc.type === type)
+      .sort((a, b) => a.logical_time - b.logical_time);
+
+    const total = allDocuments.length;
+    const documents = allDocuments.slice(offset, offset + limit);
+    const hasMore = offset + limit < total;
+
+    return {
+      documents,
+      total,
+      hasMore
+    };
   }
 
   /**

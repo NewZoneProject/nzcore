@@ -30,8 +30,34 @@ export declare class ChainStateManager {
     get length(): number;
     /**
      * Get all documents
+     * Note: For large chains, use getDocumentsPaginated() instead
      */
     get documents(): Document[];
+    /**
+     * Get documents with pagination
+     * More efficient for large chains
+     */
+    getDocumentsPaginated(options?: {
+        limit?: number;
+        offset?: number;
+        sortBy?: 'logical_time' | 'id';
+        sortOrder?: 'asc' | 'desc';
+    }): {
+        documents: Document[];
+        total: number;
+        hasMore: boolean;
+    };
+    /**
+     * Get documents by type with pagination
+     */
+    getDocumentsByType(type: string, options?: {
+        limit?: number;
+        offset?: number;
+    }): {
+        documents: Document[];
+        total: number;
+        hasMore: boolean;
+    };
     /**
      * Get detected forks (cached)
      * Returns cached result unless documents changed

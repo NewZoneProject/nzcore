@@ -42,6 +42,7 @@ export class RateLimiter {
         // Check if limit exceeded
         if (__classPrivateFieldGet(this, _RateLimiter_requests, "f").length >= __classPrivateFieldGet(this, _RateLimiter_limit, "f")) {
             const oldestRequest = __classPrivateFieldGet(this, _RateLimiter_requests, "f")[0];
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const retryAfter = Math.ceil((oldestRequest + __classPrivateFieldGet(this, _RateLimiter_windowMs, "f") - now) / 1000);
             throw new NewZoneCoreError(ERROR_CODES.VALIDATION_FAILED, `Rate limit exceeded. Try again in ${retryAfter}s`, { retryAfter, limit: __classPrivateFieldGet(this, _RateLimiter_limit, "f"), windowMs: __classPrivateFieldGet(this, _RateLimiter_windowMs, "f") });
         }
