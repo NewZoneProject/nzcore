@@ -2,15 +2,7 @@
  * RFC 8785 JSON Canonicalization Scheme
  */
 
-let canonicalize: (obj: unknown) => string | undefined;
-
-async function loadCanonicalize() {
-  if (!canonicalize) {
-    const module = await import('canonicalize');
-    canonicalize = module.default || module;
-  }
-  return canonicalize;
-}
+import canonicalize from 'canonicalize';
 
 import { NewZoneCoreError } from '../types.js';
 import { ERROR_CODES } from '../constants.js';
@@ -20,10 +12,9 @@ export class CanonicalJSON {
   /**
    * Serialize object to canonical JSON
    */
-  static async serialize(obj: unknown): Promise<string> {
+  static serialize(obj: unknown): string {
     try {
-      const canon = await loadCanonicalize();
-      const result = canon(obj);
+      const result = canonicalize(obj);
 
       if (result === undefined) {
         throw new Error('Canonicalization failed');
@@ -39,8 +30,8 @@ export class CanonicalJSON {
     }
   }
 
-  static async parse(canonicalString: string): Promise<unknown> {
-    await this.assertCanonical(canonicalString);
+  static parse(canonicalString: string): unknown {
+    this.assertCanonical(canonicalString);
 
     try {
       return JSON.parse(canonicalString);
@@ -53,10 +44,10 @@ export class CanonicalJSON {
     }
   }
 
-  static async assertCanonical(jsonString: string): Promise<void> {
+  static assertCanonical(jsonString: string): void {
     try {
       const obj = JSON.parse(jsonString);
-      const recanonicalized = await this.serialize(obj);
+      const recanonicalized = this.serialize(obj);
 
       if (!constantTimeStringEqual(jsonString, recanonicalized)) {
         throw new NewZoneCoreError(
@@ -75,34 +66,34 @@ export class CanonicalJSON {
     }
   }
 
-  static async isCanonical(jsonString: string): Promise<boolean> {
+  static isCanonical(jsonString: string): boolean {
     try {
-      await this.assertCanonical(jsonString);
+      this.assertCanonical(jsonString);
       return true;
     } catch {
       return false;
     }
   }
 
-  static async canonicalize<T>(obj: T): Promise<T> {
-    const canonical = await this.serialize(obj);
+  static canonicalize<T>(obj: T): T {
+    const canonical = this.serialize(obj);
     return JSON.parse(canonical) as T;
   }
 
-  static async prepareForSigning(doc: Record<string, unknown>): Promise<string> {
+  static prepareForSigning(doc: Record<string, unknown>): string {
     const docWithoutSig = { ...doc };
     delete (docWithoutSig as { signature?: unknown }).signature;
-    return await this.serialize(docWithoutSig);
+    return this.serialize(docWithoutSig);
   }
 
-  static async canonicalEqual(a: unknown, b: unknown): Promise<boolean> {
-    const aCanonical = await this.serialize(a);
-    const bCanonical = await this.serialize(b);
+  static canonicalEqual(a: unknown, b: unknown): boolean {
+    const aCanonical = this.serialize(a);
+    const bCanonical = this.serialize(b);
     return constantTimeStringEqual(aCanonical, bCanonical);
   }
 
-  static async hash(obj: unknown): Promise<Uint8Array> {
-    const canonical = await this.serialize(obj);
+  static hash(obj: unknown): Uint8Array {
+    const canonical = this.serialize(obj);
     return new TextEncoder().encode(canonical);
   }
 

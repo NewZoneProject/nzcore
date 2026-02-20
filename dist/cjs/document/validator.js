@@ -103,9 +103,9 @@ class DocumentValidator {
             // MUST verify canonical JSON before signature
             const docWithoutSig = { ...doc };
             delete docWithoutSig.signature;
-            const canonical = await canonical_js_1.CanonicalJSON.serialize(docWithoutSig);
+            const canonical = canonical_js_1.CanonicalJSON.serialize(docWithoutSig);
             try {
-                await canonical_js_1.CanonicalJSON.assertCanonical(canonical);
+                canonical_js_1.CanonicalJSON.assertCanonical(canonical);
             }
             catch {
                 errors.push('Document is not canonical JSON');

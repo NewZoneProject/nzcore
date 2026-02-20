@@ -97,7 +97,7 @@ class NewZoneCore {
         // Sign document
         const docWithoutSig = { ...doc };
         delete docWithoutSig.signature;
-        const canonical = await canonical_js_1.CanonicalJSON.serialize(docWithoutSig);
+        const canonical = canonical_js_1.CanonicalJSON.serialize(docWithoutSig);
         const signatureBytes = await ed25519_js_1.Ed25519.sign(new TextEncoder().encode(canonical), __classPrivateFieldGet(this, _NewZoneCore_identity, "f").privateKey);
         if (!signatureBytes || signatureBytes.length !== 64) {
             throw new types_js_1.NewZoneCoreError(constants_js_1.ERROR_CODES.INVALID_SIGNATURE, 'Failed to generate signature - empty result');

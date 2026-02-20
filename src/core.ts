@@ -119,7 +119,7 @@ export class NewZoneCore implements NewZoneCoreInstance {
     const docWithoutSig = { ...doc };
     delete (docWithoutSig as { signature?: unknown }).signature;
 
-    const canonical = await CanonicalJSON.serialize(docWithoutSig);
+    const canonical = CanonicalJSON.serialize(docWithoutSig);
 
     const signatureBytes = await Ed25519.sign(
       new TextEncoder().encode(canonical),
