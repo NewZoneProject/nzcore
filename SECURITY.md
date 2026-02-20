@@ -275,7 +275,84 @@ Application-defined rules (examples):
 
 ## 💾 Memory Security
 
+### ⚠️ Memory Limitations in JavaScript
+
+**Critical Security Notice:** JavaScript has inherent memory security limitations that cannot be fully mitigated at the application level.
+
+#### String Immutability
+
+Strings in JavaScript are **immutable**. Once a mnemonic or passphrase is stored as a string, it **cannot be securely erased** from memory:
+
+```typescript
+// ❌ CANNOT be zeroized - strings are immutable
+let mnemonic = "abandon abandon ... about";
+mnemonic = ""; // Original string data remains in memory!
+
+// ✅ Use Uint8Array for sensitive data that needs zeroization
+const seedBuffer = new Uint8Array(64);
+// ... use seedBuffer ...
+zeroize(seedBuffer); // Can securely erase
+```
+
+**Implications:**
+- Mnemonic phrases stored as strings persist in memory until garbage collection
+- GC timing is non-deterministic in JavaScript
+- String data may remain in memory for extended periods
+- Memory dumps could expose sensitive string data
+
+#### Best Practices for Sensitive Data
+
+| Data Type | Storage | Zeroization |
+|-----------|---------|-------------|
+| **Mnemonic** | String (immutable) | ❌ Cannot zeroize |
+| **Seed** | Uint8Array | ✅ Can zeroize |
+| **Private Key** | Uint8Array | ✅ Can zeroize |
+| **Signatures** | String/Uint8Array | ⚠️ Partial |
+
+#### Recommended Mitigations
+
+1. **Minimize string lifetime:**
+```typescript
+// ✅ GOOD: Convert and zeroize quickly
+const seed = Mnemonic.toSeed(mnemonic);
+// Use seed immediately, then zeroize intermediates
+zeroize(seed);
+```
+
+2. **Use secure storage for mnemonics:**
+```typescript
+// ✅ Store encrypted mnemonic
+const encrypted = await encryptMnemonic(mnemonic, password);
+// Clear mnemonic from memory
+mnemonic = undefined; // Allow GC
+```
+
+3. **Avoid logging sensitive data:**
+```typescript
+// ❌ NEVER log full mnemonic
+console.log(mnemonic); // Security risk!
+
+// ✅ Log masked version only
+console.log(Mnemonic.mask(mnemonic)); // "abandon abandon ... •••••"
+```
+
+4. **Consider WebAssembly for sensitive operations:**
+- WASM provides better memory control
+- Can allocate/deallocate memory explicitly
+- Reduces JavaScript engine exposure
+
+#### Production Deployment Recommendations
+
+| Environment | Recommendation |
+|-------------|----------------|
+| **Browser** | Use HTTPS, avoid extensions, clear memory frequently |
+| **Node.js** | Run in isolated container, limit process memory dumps |
+| **Server** | Use hardware security modules (HSM) for key storage |
+| **Mobile** | Leverage secure enclave when available |
+
 ### Zeroization Implementation
+
+**Note:** Our `zeroize()` function works only for `Uint8Array`, not for strings.
 
 ```typescript
 export function zeroize(array: Uint8Array): void {
@@ -588,6 +665,26 @@ const doc = await core.createDocument('encrypted', { data: encryptedPayload });
 **Mitigation:**
 - Export/import state for persistence
 - Implement pagination for large document sets
+
+### 5. JavaScript Memory Security Limitations
+
+**Limitation:** Cannot securely zeroize strings in JavaScript
+
+**Details:**
+- Mnemonic phrases stored as strings cannot be erased from memory
+- JavaScript garbage collection is non-deterministic
+- Sensitive string data may persist until GC runs
+- Memory dumps could expose mnemonic phrases
+
+**Mitigation:**
+- Convert mnemonic to Uint8Array seed immediately
+- Zeroize intermediate buffers after use
+- Store encrypted mnemonic when persistence needed
+- Consider WASM for sensitive operations
+- Use secure enclaves/HSM in production
+- Minimize time sensitive data spends in memory
+
+**See:** [Memory Limitations in JavaScript](#-memory-limitations-in-javascript)
 
 ---
 
