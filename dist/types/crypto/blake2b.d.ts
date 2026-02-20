@@ -33,5 +33,10 @@ export declare class Blake2b {
      * SHA-256 (fallback, not primary)
      */
     static sha256(data: Uint8Array): Uint8Array;
+    /**
+     * Compute document hash for integrity verification
+     * Uses same algorithm as IdentityDerivation.deriveDocumentId()
+     */
+    static computeDocumentHash(chainId: string, parentHash: string, logicalTime: number, payload?: Record<string, unknown>): string;
 }
 //# sourceMappingURL=blake2b.d.ts.map

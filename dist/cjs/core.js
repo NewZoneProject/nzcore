@@ -79,15 +79,9 @@ class NewZoneCore {
      * Core API: deterministic, no wall-clock dependencies
      */
     async createDocument(type, payload = {}) {
-        console.log('=== createDocument start ===');
-        console.log('Type:', type);
-        console.log('Payload:', payload);
         this.assertInitialized();
-        console.log('Instance initialized OK');
         const logicalTime = __classPrivateFieldGet(this, _NewZoneCore_clock, "f").tick();
         const parentHash = __classPrivateFieldGet(this, _NewZoneCore_chainState, "f").getLastHash();
-        console.log('Logical time:', logicalTime);
-        console.log('Parent hash:', parentHash);
         const builder = new builder_js_1.DocumentBuilder()
             .setType(type)
             .setChainId(__classPrivateFieldGet(this, _NewZoneCore_chainState, "f").chainId)
@@ -98,30 +92,17 @@ class NewZoneCore {
         // Generate deterministic ID
         const id = derivation_js_1.IdentityDerivation.deriveDocumentId(__classPrivateFieldGet(this, _NewZoneCore_chainState, "f").chainId, parentHash, logicalTime);
         builder.setId(id);
-        console.log('Document ID:', id);
         // Build document (canonical)
-        console.log('Building document...');
         const doc = await builder.build();
-        console.log('Document built, fields:', Object.keys(doc));
         // Sign document
-        console.log('Preparing for signing...');
         const docWithoutSig = { ...doc };
         delete docWithoutSig.signature;
-        console.log('Serializing to canonical JSON...');
         const canonical = await canonical_js_1.CanonicalJSON.serialize(docWithoutSig);
-        console.log('Canonical JSON:', canonical.substring(0, 100) + '...');
-        console.log('Signing with private key...');
-        console.log('Private key length:', __classPrivateFieldGet(this, _NewZoneCore_identity, "f").privateKey.length);
         const signatureBytes = await ed25519_js_1.Ed25519.sign(new TextEncoder().encode(canonical), __classPrivateFieldGet(this, _NewZoneCore_identity, "f").privateKey);
-        console.log('Signature bytes length:', signatureBytes.length);
-        console.log('Signature bytes (first 10):', Array.from(signatureBytes.slice(0, 10)).map(b => b.toString(16)).join(''));
-        if (!signatureBytes || signatureBytes.length === 0) {
+        if (!signatureBytes || signatureBytes.length !== 64) {
             throw new types_js_1.NewZoneCoreError(constants_js_1.ERROR_CODES.INVALID_SIGNATURE, 'Failed to generate signature - empty result');
         }
         doc.signature = (0, encoding_js_1.toHex)(signatureBytes);
-        console.log('Signature hex length:', doc.signature.length);
-        console.log('Signature hex (first 20):', doc.signature.substring(0, 20));
-        console.log('=== createDocument end ===');
         // Commit to chain
         __classPrivateFieldGet(this, _NewZoneCore_chainState, "f").append(doc);
         return doc;

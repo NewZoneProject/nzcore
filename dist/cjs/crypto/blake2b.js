@@ -11,6 +11,8 @@ const types_js_1 = require("../types.js");
 const constants_js_1 = require("../constants.js");
 const zeroize_js_1 = require("../utils/zeroize.js");
 const encoding_js_1 = require("../utils/encoding.js");
+const constants_js_2 = require("../constants.js");
+const constants_js_3 = require("../constants.js");
 class Blake2b {
     /**
      * BLAKE2b-256 hash
@@ -64,6 +66,16 @@ class Blake2b {
      */
     static sha256(data) {
         return (0, sha256_1.sha256)(data);
+    }
+    /**
+     * Compute document hash for integrity verification
+     * Uses same algorithm as IdentityDerivation.deriveDocumentId()
+     */
+    static computeDocumentHash(chainId, parentHash, logicalTime, payload) {
+        const domain = `nzcore-${constants_js_2.CRYPTO_SUITE}-document`;
+        const inputs = (0, encoding_js_1.mergeArrays)(new TextEncoder().encode(chainId), new TextEncoder().encode(parentHash), new Uint8Array(new Uint32Array([logicalTime]).buffer), new TextEncoder().encode(JSON.stringify(payload || {})));
+        const hash = this.hashWithDomain(domain, inputs);
+        return (0, encoding_js_1.toHex)(hash.slice(0, constants_js_3.KEY_LENGTHS.DOCUMENT_ID));
     }
 }
 exports.Blake2b = Blake2b;

@@ -67,15 +67,11 @@ class Ed25519 {
     }
     /**
      * Sign data with Ed25519
+     * @noble/ed25519 guarantees 64-byte signatures
      */
     static async sign(data, privateKey) {
         try {
-            const signature = await ed.sign(data, privateKey);
-            // Проверяем, что подпись корректна
-            if (!signature || signature.length !== 64) {
-                throw new Error('Invalid signature generated');
-            }
-            return signature;
+            return await ed.sign(data, privateKey);
         }
         catch (e) {
             throw new types_js_1.NewZoneCoreError(constants_js_1.ERROR_CODES.INVALID_SIGNATURE, 'Failed to sign data', { error: e });

@@ -4,11 +4,9 @@
  */
 
 import { Blake2b } from '../crypto/blake2b.js';
-import { toHex, mergeArrays } from '../utils/encoding.js';
 import { Document, ChainState, ForkInfo, NewZoneCoreError } from '../types.js';
 import { ERROR_CODES } from '../constants.js';
 import { LogicalClock } from '../identity/logical-time.js';
-import { KEY_LENGTHS } from '../constants.js';
 
 export class ChainStateManager {
   readonly chainId: string;
@@ -131,42 +129,32 @@ export class ChainStateManager {
    */
   verifyIntegrity(): boolean {
     let prevHash = '0'.repeat(64);
-    
+
     // Sort by logical time
     const sorted = Array.from(this.#documents.values())
       .sort((a, b) => a.logical_time - b.logical_time);
-    
+
     for (const doc of sorted) {
       // Check parent chain
       if (doc.parent_hash !== prevHash) {
         return false;
       }
-      
-      // Verify hash chain
-      const computedHash = this.#computeDocumentHash(doc);
+
+      // Verify hash chain using unified document hash computation
+      const computedHash = Blake2b.computeDocumentHash(
+        doc.chain_id,
+        doc.parent_hash,
+        doc.logical_time,
+        doc.payload
+      );
       if (computedHash !== doc.id) {
         return false;
       }
-      
+
       prevHash = doc.id;
     }
-    
-    return true;
-  }
 
-  /**
-   * Compute document hash
-   */
-  #computeDocumentHash(doc: Document): string {
-    const data = mergeArrays(
-      new TextEncoder().encode(doc.chain_id),
-      new TextEncoder().encode(doc.parent_hash),
-      new Uint8Array(new Uint32Array([doc.logical_time]).buffer),
-      new TextEncoder().encode(JSON.stringify(doc.payload || {}))
-    );
-    
-    const hash = Blake2b.doubleHash(data);
-    return toHex(hash.slice(0, KEY_LENGTHS.DOCUMENT_ID));
+    return true;
   }
 
   /**

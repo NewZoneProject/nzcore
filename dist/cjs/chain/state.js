@@ -14,15 +14,13 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _ChainStateManager_instances, _ChainStateManager_documents, _ChainStateManager_lastHash, _ChainStateManager_clock, _ChainStateManager_detectedForks, _ChainStateManager_detectFork, _ChainStateManager_computeDocumentHash;
+var _ChainStateManager_instances, _ChainStateManager_documents, _ChainStateManager_lastHash, _ChainStateManager_clock, _ChainStateManager_detectedForks, _ChainStateManager_detectFork;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChainStateManager = void 0;
 const blake2b_js_1 = require("../crypto/blake2b.js");
-const encoding_js_1 = require("../utils/encoding.js");
 const types_js_1 = require("../types.js");
 const constants_js_1 = require("../constants.js");
 const logical_time_js_1 = require("../identity/logical-time.js");
-const constants_js_2 = require("../constants.js");
 class ChainStateManager {
     constructor(chainId, initialTime = 1) {
         _ChainStateManager_instances.add(this);
@@ -114,8 +112,8 @@ class ChainStateManager {
             if (doc.parent_hash !== prevHash) {
                 return false;
             }
-            // Verify hash chain
-            const computedHash = __classPrivateFieldGet(this, _ChainStateManager_instances, "m", _ChainStateManager_computeDocumentHash).call(this, doc);
+            // Verify hash chain using unified document hash computation
+            const computedHash = blake2b_js_1.Blake2b.computeDocumentHash(doc.chain_id, doc.parent_hash, doc.logical_time, doc.payload);
             if (computedHash !== doc.id) {
                 return false;
             }
@@ -177,9 +175,5 @@ _ChainStateManager_documents = new WeakMap(), _ChainStateManager_lastHash = new 
         };
         __classPrivateFieldGet(this, _ChainStateManager_detectedForks, "f").set(document.parent_hash, forkInfo);
     }
-}, _ChainStateManager_computeDocumentHash = function _ChainStateManager_computeDocumentHash(doc) {
-    const data = (0, encoding_js_1.mergeArrays)(new TextEncoder().encode(doc.chain_id), new TextEncoder().encode(doc.parent_hash), new Uint8Array(new Uint32Array([doc.logical_time]).buffer), new TextEncoder().encode(JSON.stringify(doc.payload || {})));
-    const hash = blake2b_js_1.Blake2b.doubleHash(data);
-    return (0, encoding_js_1.toHex)(hash.slice(0, constants_js_2.KEY_LENGTHS.DOCUMENT_ID));
 };
 //# sourceMappingURL=state.js.map

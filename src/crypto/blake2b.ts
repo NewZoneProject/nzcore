@@ -8,7 +8,9 @@ import { sha256 } from '@noble/hashes/sha256';
 import { NewZoneCoreError } from '../types.js';
 import { ERROR_CODES } from '../constants.js';
 import { constantTimeEqual } from '../utils/zeroize.js';
-import { toHex } from '../utils/encoding.js';
+import { toHex, mergeArrays } from '../utils/encoding.js';
+import { CRYPTO_SUITE } from '../constants.js';
+import { KEY_LENGTHS } from '../constants.js';
 
 export class Blake2b {
   /**
@@ -72,5 +74,28 @@ export class Blake2b {
    */
   static sha256(data: Uint8Array): Uint8Array {
     return sha256(data);
+  }
+
+  /**
+   * Compute document hash for integrity verification
+   * Uses same algorithm as IdentityDerivation.deriveDocumentId()
+   */
+  static computeDocumentHash(
+    chainId: string,
+    parentHash: string,
+    logicalTime: number,
+    payload?: Record<string, unknown>
+  ): string {
+    const domain = `nzcore-${CRYPTO_SUITE}-document`;
+
+    const inputs = mergeArrays(
+      new TextEncoder().encode(chainId),
+      new TextEncoder().encode(parentHash),
+      new Uint8Array(new Uint32Array([logicalTime]).buffer),
+      new TextEncoder().encode(JSON.stringify(payload || {}))
+    );
+
+    const hash = this.hashWithDomain(domain, inputs);
+    return toHex(hash.slice(0, KEY_LENGTHS.DOCUMENT_ID));
   }
 }

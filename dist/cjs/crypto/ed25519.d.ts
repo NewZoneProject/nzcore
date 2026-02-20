@@ -12,6 +12,7 @@ export declare class Ed25519 {
     }>;
     /**
      * Sign data with Ed25519
+     * @noble/ed25519 guarantees 64-byte signatures
      */
     static sign(data: Uint8Array, privateKey: Uint8Array): Promise<Uint8Array>;
     /**
