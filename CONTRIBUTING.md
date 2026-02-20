@@ -631,4 +631,34 @@ By contributing, you agree that your contributions will be licensed under the pr
 
 ---
 
+## 📖 Glossary
+
+Consistent terminology across the codebase:
+
+| Term | Definition | Usage |
+|------|------------|-------|
+| **mnemonic** | BIP-39 mnemonic phrase (24 words) | User-facing identity backup |
+| **seed** | BIP-39 seed (64 bytes) | Derived from mnemonic, used for key derivation |
+| **ikm** | Input Key Material | Generic term for key derivation input |
+| **privateKey** | Ed25519 private key (32 bytes) | Used for signing documents |
+| **publicKey** | Ed25519 public key (32 bytes) | Used for verification |
+| **chainId** | Unique chain identifier (32 bytes hex) | Derived from public key |
+| **documentId** | Unique document identifier (32 bytes hex) | Computed from chain state |
+| **logical_time** | Monotonic counter | Document ordering (not wall-clock time) |
+| **parent_hash** | Hash of previous document | Chain linkage |
+| **fork** | Multiple documents with same parent_hash | Security anomaly |
+| **crypto_suite** | Cryptographic algorithm suite | Currently: `nzcore-crypto-01` |
+
+### Naming Conventions
+
+| Pattern | Example | Description |
+|---------|---------|-------------|
+| `toX()` | `toHex()`, `toSeed()` | Conversion functions |
+| `fromX()` | `fromHex()`, `fromEntropy()` | Reverse conversion |
+| `deriveX()` | `deriveKey()`, `deriveDocumentId()` | Key/ID derivation |
+| `validateX()` | `validateMnemonic()`, `validateStructural()` | Validation functions |
+| `#privateField` | `#documents`, `#clock` | Private class fields |
+
+---
+
 *Last updated: February 20, 2026*
