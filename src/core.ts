@@ -90,78 +90,56 @@ export class NewZoneCore implements NewZoneCoreInstance {
    * Create a new document
    * Core API: deterministic, no wall-clock dependencies
    */
-async createDocument(type: string, payload: DocumentPayload = {}): Promise<Document> {
-  console.log('=== createDocument start ===');
-  console.log('Type:', type);
-  console.log('Payload:', payload);
-  
-  this.assertInitialized();
-  console.log('Instance initialized OK');
+  async createDocument(type: string, payload: DocumentPayload = {}): Promise<Document> {
+    this.assertInitialized();
 
-  const logicalTime = this.#clock!.tick();
-  const parentHash = this.#chainState!.getLastHash();
-  console.log('Logical time:', logicalTime);
-  console.log('Parent hash:', parentHash);
+    const logicalTime = this.#clock!.tick();
+    const parentHash = this.#chainState!.getLastHash();
 
-  const builder = new DocumentBuilder()
-    .setType(type)
-    .setChainId(this.#chainState!.chainId)
-    .setParentHash(parentHash)
-    .setLogicalTime(logicalTime)
-    .setCryptoSuite('nzcore-crypto-01')
-    .setPayload(payload);
+    const builder = new DocumentBuilder()
+      .setType(type)
+      .setChainId(this.#chainState!.chainId)
+      .setParentHash(parentHash)
+      .setLogicalTime(logicalTime)
+      .setCryptoSuite('nzcore-crypto-01')
+      .setPayload(payload);
 
-  // Generate deterministic ID
-  const id = IdentityDerivation.deriveDocumentId(
-    this.#chainState!.chainId,
-    parentHash,
-    logicalTime
-  );
-  builder.setId(id);
-  console.log('Document ID:', id);
-
-  // Build document (canonical)
-  console.log('Building document...');
-  const doc = await builder.build();
-  console.log('Document built, fields:', Object.keys(doc));
-
-  // Sign document
-  console.log('Preparing for signing...');
-  const docWithoutSig = { ...doc };
-  delete (docWithoutSig as { signature?: unknown }).signature;
-  
-  console.log('Serializing to canonical JSON...');
-  const canonical = await CanonicalJSON.serialize(docWithoutSig);
-  console.log('Canonical JSON:', canonical.substring(0, 100) + '...');
-  
-  console.log('Signing with private key...');
-  console.log('Private key length:', this.#identity!.privateKey.length);
-  
-  const signatureBytes = await Ed25519.sign(
-    new TextEncoder().encode(canonical),
-    this.#identity!.privateKey
-  );
-  
-  console.log('Signature bytes length:', signatureBytes.length);
-  console.log('Signature bytes (first 10):', Array.from(signatureBytes.slice(0, 10)).map(b => b.toString(16)).join(''));
-  
-  if (!signatureBytes || signatureBytes.length === 0) {
-    throw new NewZoneCoreError(
-      ERROR_CODES.INVALID_SIGNATURE,
-      'Failed to generate signature - empty result'
+    // Generate deterministic ID
+    const id = IdentityDerivation.deriveDocumentId(
+      this.#chainState!.chainId,
+      parentHash,
+      logicalTime
     );
+    builder.setId(id);
+
+    // Build document (canonical)
+    const doc = await builder.build();
+
+    // Sign document
+    const docWithoutSig = { ...doc };
+    delete (docWithoutSig as { signature?: unknown }).signature;
+
+    const canonical = await CanonicalJSON.serialize(docWithoutSig);
+
+    const signatureBytes = await Ed25519.sign(
+      new TextEncoder().encode(canonical),
+      this.#identity!.privateKey
+    );
+
+    if (!signatureBytes || signatureBytes.length !== 64) {
+      throw new NewZoneCoreError(
+        ERROR_CODES.INVALID_SIGNATURE,
+        'Failed to generate signature - empty result'
+      );
+    }
+
+    doc.signature = toHex(signatureBytes);
+
+    // Commit to chain
+    this.#chainState!.append(doc);
+
+    return doc;
   }
-  
-  doc.signature = toHex(signatureBytes);
-  console.log('Signature hex length:', doc.signature.length);
-  console.log('Signature hex (first 20):', doc.signature.substring(0, 20));
-  console.log('=== createDocument end ===');
-
-  // Commit to chain
-  this.#chainState!.append(doc);
-
-  return doc;
-}
 
   /**
    * Verify document
